@@ -109,6 +109,31 @@
 					"response": []
 				},
 				{
+					"name": "List all Buildings (ID only)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/building?idOnly=true",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"building"
+							],
+							"query": [
+								{
+									"key": "idOnly",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Search Building by Id",
 					"request": {
 						"method": "GET",
@@ -213,7 +238,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"number\": 10,\n\t\"building_id\": \"{{building_id}}\"\n}",
+							"raw": "{\n\t\"number\": 10\n}",
 							"options": {
 								"raw": {
 									"language": "json"

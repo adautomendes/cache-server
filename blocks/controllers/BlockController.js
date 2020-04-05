@@ -1,7 +1,8 @@
 const HttpStatus = require('http-status-codes');
+const CacheService = require('../service/CacheService');
 
 const Block = require('../models/Block');
-const Logger = require('../logger')('[BLOCK]');
+const Logger = require('../log')('[BLOCK]');
 
 module.exports = {
     async insert(req, res) {
@@ -16,13 +17,21 @@ module.exports = {
                 return res.status(HttpStatus.OK).json(blockExists);
             }
 
-            const block = await Block.create({
-                number,
-                building_id
-            });
+            //Check if building exists
+            if (CacheService.getCache().indexOf(building_id) > -1) {
+                const block = await Block.create({
+                    number,
+                    building_id
+                });
 
-            Logger.print(`'${number}' created!`);
-            return res.status(HttpStatus.CREATED).json(block);
+                Logger.print(`'${number}' created!`);
+                return res.status(HttpStatus.CREATED).json(block);
+            } else {
+                return res.status(HttpStatus.FORBIDDEN).json({
+                    status: HttpStatus.FORBIDDEN,
+                    error: `Building with id=${building_id} does not exists`
+                });
+            }
         } catch (error) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 status: HttpStatus.BAD_REQUEST,
@@ -34,11 +43,10 @@ module.exports = {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const { number, building_id } = req.body;
+            const { number } = req.body;
 
             const response = await Block.updateOne({ _id: id }, {
-                number,
-                building_id
+                number
             });
 
             if (response.nModified == 1 && response.ok == 1) {
@@ -57,7 +65,7 @@ module.exports = {
     async search(req, res) {
         try {
             const { id } = req.params;
-            let blocks;
+            let blocks = [];
 
             if (id) { //Find one
                 blocks = await Block.findById(id);

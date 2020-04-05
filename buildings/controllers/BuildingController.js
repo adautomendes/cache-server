@@ -1,7 +1,8 @@
 const HttpStatus = require('http-status-codes');
 
 const Building = require('../models/Building');
-const Logger = require('../logger')('[BUILDING]');
+const CacheService = require('../service/CacheService');
+const Log = require('../log')('[BUILDING]');
 
 module.exports = {
     async insert(req, res) {
@@ -12,7 +13,7 @@ module.exports = {
             const buildingExists = await Building.findOne({ name });
 
             if (buildingExists) {
-                Logger.print(`'${name}' already exists.`);
+                Log.print(`'${name}' already exists.`);
                 return res.status(HttpStatus.OK).json(buildingExists);
             }
 
@@ -21,7 +22,10 @@ module.exports = {
                 address
             });
 
-            Logger.print(`'${name}' created!`);
+            Log.print(`'${name}' created!`);
+
+            CacheService.clearCache();
+
             return res.status(HttpStatus.CREATED).json(building);
         } catch (error) {
             return res.status(HttpStatus.BAD_REQUEST).json({
@@ -42,7 +46,7 @@ module.exports = {
             });
 
             if (response.nModified == 1 && response.ok == 1) {
-                Logger.print(`'${name}' updated!`);
+                Log.print(`'${name}' updated!`);
                 const building = await Building.findById(id);
                 return res.status(HttpStatus.OK).json(building);
             }
@@ -57,14 +61,23 @@ module.exports = {
     async search(req, res) {
         try {
             const { id } = req.params;
-            let buildings;
+            const { idOnly } = req.query;
+            let buildings = [];
 
             if (id) { //Find one
                 buildings = await Building.findById(id);
-                Logger.print(`Building '${buildings.title}' found!`);
+                Log.print(`Building '${buildings.title}' found!`);
+            } else if (idOnly && idOnly == 'true') {
+                idList = await Building.find().select({ _id: 1 });
+
+                for (const buildingId of idList) {
+                    buildings.push(buildingId._id);
+                }
+
+                Log.print(`${buildings.length} buildings found!`);
             } else { //Find all
                 buildings = await Building.find();
-                Logger.print(`${buildings.length} buildings found!`);
+                Log.print(`${buildings.length} buildings found!`);
             }
 
             return res.status(HttpStatus.OK).json(buildings);
@@ -86,7 +99,10 @@ module.exports = {
                 const response = await Building.deleteOne({ _id: id });
 
                 if (response.deletedCount == 1 && response.ok == 1) {
-                    Logger.print(`'${building.name}' removed!`);
+                    Log.print(`'${building.name}' removed!`);
+
+                    CacheService.clearCache();
+
                     return res.status(HttpStatus.OK).json({
                         response
                     });

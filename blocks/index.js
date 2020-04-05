@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const routes = require('./routes');
 const DB = require('./database/config');
-const Logger = require('./logger')('[SERVER]');
+const Log = require('./log')('[SERVER]');
 
 const server = express();
 
@@ -13,12 +13,12 @@ server.use(routes);
 
 mongoose.connect(DB.DB_URL, DB.DB_SETTINGS, (err) => {
     if(!err) {
-        Logger.print(`✔ Connected to MongoDB`);
+        Log.print(`✔ Connected to MongoDB`);
     } else {
-        Logger.print(`✖ Error while connecting to MongoDB.\n${err}`);
+        Log.print(`✖ Error while connecting to MongoDB.\n${err}`);
     }
 });
 
 server.listen(process.env.PORT, () => {
-    Logger.print(`✔ Blocks service running at port ${process.env.PORT}`)
+    Log.print(`✔ Blocks service running at port ${process.env.PORT}`)
 });
